@@ -61,8 +61,8 @@ wget -q -O gpg.key https://rpm.grafana.com/gpg.key
 sudo rpm --import gpg.key
 sudo cat <<EOF | tee /etc/yum.repos.d/grafana.repo
 [grafana]
-name=grafana
-baseurl=https://rpm.grafana.com
+name=Grafana
+baseurl=https://rpm.grafana.com/oss/rpm
 repo_gpgcheck=1
 enabled=1
 gpgcheck=1
