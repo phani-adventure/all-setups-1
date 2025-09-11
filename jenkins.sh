@@ -1,14 +1,27 @@
-#! /bin/bash
-sudo apt update -y
-sudo apt install -y openjdk-17-jdk
-java -version
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
-  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+#!/bin/bash
+# Update system
+sudo yum update -y
 
-echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
-  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
-  /etc/apt/sources.list.d/jenkins.list > /dev/null
-sudo apt update -y
-sudo apt install -y jenkins
+# Install Java (Jenkins requires Java 11+; we use Amazon Corretto 17)
+sudo amazon-linux-extras enable corretto17
+sudo yum install -y java-17-amazon-corretto
+
+# Verify Java installation
+java -version
+
+# Add Jenkins repo
+sudo wget -O /etc/yum.repos.d/jenkins.repo \
+    https://pkg.jenkins.io/redhat-stable/jenkins.repo
+
+# Import Jenkins key
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+# Install Jenkins
+sudo yum install -y jenkins
+
+# Enable and start Jenkins service
+sudo systemctl enable jenkins
 sudo systemctl start jenkins
+
+# Check Jenkins status
 sudo systemctl status jenkins
