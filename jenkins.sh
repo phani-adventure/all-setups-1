@@ -1,28 +1,49 @@
-#STEP-1: INSTALLING GIT JAVA-1.8.0 MAVEN
-yum install git java-1.8.0-openjdk maven -y
-#! /bin/bash
-sudo apt update -y
-sudo apt install -y openjdk-17-jdk
+#!/bin/bash
+set -euo pipefail
+
+# STEP-0: ensure basic tools
+yum update -y
+yum install -y wget curl
+
+# STEP-1: install git, maven (and keep Java 11)
+yum install -y git maven
+
+# Install OpenJDK 11 (amazon-linux-extras available on Amazon Linux)
+if command -v amazon-linux-extras >/dev/null 2>&1; then
+  amazon-linux-extras enable java-openjdk11
+  yum install -y java-11-openjdk-devel
+else
+  # Fallback for RHEL/CentOS: install from yum repos
+  yum install -y java-11-openjdk-devel
+fi
+
+# Verify java
 java -version
-curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
-  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
 
-#STEP-2: GETTING THE REPO (jenkins.io --> download -- > redhat)
-sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+# STEP-2: Add Jenkins repo (official)
+wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
 
-#STEP-3: DOWNLOAD JAVA11 AND JENKINS
-sudo yum install java-17-amazon-corretto -y
-yum install jenkins -y
-update-alternatives --config java
+# STEP-3: install Jenkins
+yum install -y jenkins
 
-#STEP-4: RESTARTING JENKINS (when we download service it will on stopped state)
-systemctl start jenkins.service
-systemctl status jenkins.service
-echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
-  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
-  /etc/apt/sources.list.d/jenkins.list > /dev/null
-sudo apt update -y
-sudo apt install -y jenkins
-sudo systemctl start jenkins
-sudo systemctl status jenkins
+# STEP-4: configure alternatives if needed (optional interactive)
+# update-alternatives --config java   # you can run this manually if multiple java versions present
+
+# STEP-5: enable and start Jenkins so it is enabled across reboots
+systemctl daemon-reload
+systemctl enable --now jenkins.service
+
+# STEP-6: show status and initial admin password location
+systemctl status jenkins --no-pager
+echo
+echo "Initial admin password (if present):"
+if [ -f /var/lib/jenkins/secrets/initialAdminPassword ]; then
+  cat /var/lib/jenkins/secrets/initialAdminPassword
+else
+  echo "/var/lib/jenkins/secrets/initialAdminPassword not present yet (Jenkins still initializing)"
+fi
+
+# Optional: open firewall (if firewalld in use)
+# firewall-cmd --permanent --add-port=8080/tcp
+# firewall-cmd --reload
