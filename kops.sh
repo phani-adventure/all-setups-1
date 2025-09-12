@@ -1,32 +1,18 @@
-#!/bin/bash
+#vim .bashrc
+#export PATH=$PATH:/usr/local/bin/
+#source .bashrc
 
-# Exit if any command fails
-set -e
 
-# Step 0: Prompt for AWS credentials and region
-echo "🛠️   Configuring AWS CLI..."
+#! /bin/bash
 aws configure
-
-# Step 1: Install kubectl
-echo "⬇️  Installing kubectl..."
-curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-chmod +x kubectl
-mv kubectl /usr/local/bin/
-
-# Step 2: Install kops
-echo "⬇️  Installing kops..."
-wget https://github.com/kubernetes/kops/releases/download/v1.32.0/kops-linux-amd64
-chmod +x kops-linux-amd64
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+wget https://github.com/kubernetes/kops/releases/download/v1.33.0/kops-linux-amd64
+chmod +x kops-linux-amd64 kubectl
+mv kubectl /usr/local/bin/kubectl
 mv kops-linux-amd64 /usr/local/bin/kops
 
-# Step 3: Create S3 bucket for KOPS state store
-BUCKET_NAME="cloudanddevopsbyphani00734567.k8s.local"
-REGION=$(aws configure get region)
-
-echo "🪣 Creating S3 bucket $BUCKET_NAME in $REGION..."
-aws s3api create-bucket --bucket $BUCKET_NAME --region $REGION
-aws s3api put-bucket-versioning --bucket $BUCKET_NAME --region $REGION --versioning-configuration Status=Enabled
-export KOPS_STATE_STORE=s3://$BUCKET_NAME
-
-# Step 4: Set cluster name and availability zone
-CLUSTER_NAME="agoproject1.k8s.local"
+aws s3api create-bucket --bucket cloudanddevopsbyraham0073456.k8s.local --region us-east-1
+aws s3api put-bucket-versioning --bucket cloudanddevopsbyraham0073456.k8s.local --region us-east-1 --versioning-configuration Status=Enabled
+export KOPS_STATE_STORE=s3://cloudanddevopsbyraham0073456.k8s.local
+kops create cluster --name rahamss.k8s.local --zones ap-south-1a --control-plane-image ami-0f918f7e67a3323f0 --control-plane-count=1 --control-plane-size t2.large --image ami-0f918f7e67a3323f0 --node-count=2 --node-size t2.medium
+kops update cluster --name rahams.k8s.local --yes --admin
